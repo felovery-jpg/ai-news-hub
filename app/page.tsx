@@ -10,6 +10,8 @@ import type { Article } from '@/lib/supabase'
 export const revalidate = 3600 // Revalidate every hour
 
 async function getLatestArticles(category?: string): Promise<Article[]> {
+  if (!supabase) return []
+  
   let query = supabase
     .from('articles')
     .select('*')
@@ -29,6 +31,8 @@ async function getLatestArticles(category?: string): Promise<Article[]> {
 }
 
 async function getFeaturedArticles(): Promise<Article[]> {
+  if (!supabase) return []
+  
   const { data } = await supabase
     .from('articles')
     .select('*')
