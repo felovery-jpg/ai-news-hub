@@ -1,0 +1,61 @@
+name: SEO & Index Submission
+
+on:
+  # Run after daily collection
+  workflow_run:
+    workflows: ["Daily AI News Collection"]
+    types: [completed]
+  # Also run weekly for full sitemap resubmission
+  schedule:
+    - cron: '0 7 * * 1'  # Every Monday at 7 AM UTC
+
+jobs:
+  submit-seo:
+    name: Submit to Search Engines
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Google with Sitemap
+        run: |
+          SITEMAP="${{ secrets.SITE_URL }}/sitemap.xml"
+          echo "📍 Submitting sitemap to Google..."
+          curl -s "https://www.google.com/ping?sitemap=$(python3 -c 'import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))' "$SITEMAP")" || true
+          echo "✅ Google pinged"
+      
+      - name: Ping Bing with Sitemap  
+        run: |
+          SITEMAP="${{ secrets.SITE_URL }}/sitemap.xml"
+          echo "📍 Submitting sitemap to Bing..."
+          curl -s "https://www.bing.com/ping?sitemap=$(python3 -c 'import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))' "$SITEMAP")" || true
+          echo "✅ Bing pinged"
+      
+      - name: Submit IndexNow Batch
+        run: |
+          echo "📡 Submitting recent URLs to IndexNow..."
+          
+          # Get recent article slugs and submit to IndexNow
+          curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"host\": \"$(echo ${{ secrets.SITE_URL }} | sed 's|https://||')\",
+              \"key\": \"${{ secrets.INDEXNOW_KEY }}\",
+              \"keyLocation\": \"${{ secrets.SITE_URL }}/${{ secrets.INDEXNOW_KEY }}.txt\",
+              \"urlList\": [
+                \"${{ secrets.SITE_URL }}\",
+                \"${{ secrets.SITE_URL }}/tools\",
+                \"${{ secrets.SITE_URL }}/sitemap.xml\"
+              ]
+            }" \
+            "https://api.indexnow.org/indexnow" || true
+          
+          # Also submit to Bing IndexNow
+          curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"host\": \"$(echo ${{ secrets.SITE_URL }} | sed 's|https://||')\",
+              \"key\": \"${{ secrets.INDEXNOW_KEY }}\",
+              \"urlList\": [\"${{ secrets.SITE_URL }}\"]
+            }" \
+            "https://www.bing.com/indexnow" || true
+          
+          echo "✅ IndexNow submission complete"
