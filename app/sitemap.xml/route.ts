@@ -5,6 +5,15 @@ import { SITE_CONFIG } from '@/lib/config'
 export const revalidate = 3600
 
 export async function GET() {
+  if (!supabase) {
+    const siteUrl = SITE_CONFIG.url
+    return new NextResponse(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>${siteUrl}</loc><changefreq>hourly</changefreq><priority>1.0</priority></url>
+  <url><loc>${siteUrl}/tools</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+</urlset>`, { headers: { 'Content-Type': 'application/xml' } })
+  }
+  
   const { data: articles } = await supabase
     .from('articles')
     .select('slug, published_at, title')
