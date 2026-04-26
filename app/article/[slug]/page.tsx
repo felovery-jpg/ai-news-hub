@@ -12,6 +12,7 @@ type Props = {
 }
 
 async function getArticle(slug: string): Promise<Article | null> {
+  if (!supabase) return null
   const { data } = await supabase
     .from('articles')
     .select('*')
@@ -21,6 +22,7 @@ async function getArticle(slug: string): Promise<Article | null> {
 }
 
 async function getRelatedArticles(category: string, excludeId: string): Promise<Article[]> {
+  if (!supabase) return []
   const { data } = await supabase
     .from('articles')
     .select('*')
@@ -64,11 +66,13 @@ export default async function ArticlePage({ params }: Props) {
   const related = await getRelatedArticles(article.category, article.id)
   
   // Increment view count (fire and forget)
-  supabase
-    .from('articles')
-    .update({ view_count: (article.view_count || 0) + 1 })
-    .eq('id', article.id)
-    .then(() => {})
+  if (supabase) {
+    supabase
+      .from('articles')
+      .update({ view_count: (article.view_count || 0) + 1 })
+      .eq('id', article.id)
+      .then(() => {})
+  }
   
   const publishedDate = new Date(article.published_at).toLocaleDateString('en-US', {
     year: 'numeric',
