@@ -16,10 +16,14 @@ export async function POST(req: NextRequest) {
   }
   
   // Use service role key for write operations
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return NextResponse.json({ error: 'Missing Supabase configuration' }, { status: 500 })
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
   
   console.log('🤖 Starting daily feed collection...')
   
