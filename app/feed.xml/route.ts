@@ -5,6 +5,12 @@ import { SITE_CONFIG } from '@/lib/config'
 export const revalidate = 1800
 
 export async function GET() {
+  if (!supabase) {
+    return new NextResponse('<?xml version="1.0"?><rss><channel><title>AI News Hub</title></channel></rss>', {
+      headers: { 'Content-Type': 'application/rss+xml; charset=utf-8' },
+    })
+  }
+  
   const { data: articles } = await supabase
     .from('articles')
     .select('*')
